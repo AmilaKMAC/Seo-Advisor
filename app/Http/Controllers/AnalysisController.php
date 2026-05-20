@@ -2,28 +2,30 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use App\Models\SeoReport;
+use App\Services\AiFixGeneratorService;
 use App\Services\SeoAnalyzerService;
 use App\Services\TechnicalSeoService;
-use App\Services\AiFixGeneratorService;
+use App\Services\OffPageSeoService;
+use Illuminate\Http\Request;
 
 class AnalysisController extends Controller
 {
     public function __construct(
-        protected SeoAnalyzerService    $seoAnalyzer,
-        protected TechnicalSeoService   $technicalSeo,
+        protected SeoAnalyzerService $seoAnalyzer,
+        protected TechnicalSeoService $technicalSeo,
         protected AiFixGeneratorService $aiFixGenerator,
+        protected OffPageSeoService $offPageSeo,
     ) {}
 
     public function analyze(Request $request)
     {
         $request->validate([
-            'website_url'  => ['required', 'url', 'max:2048'],
+            'website_url' => ['required', 'url', 'max:2048'],
             'project_name' => ['nullable', 'string', 'max:255'],
         ]);
 
-        $url         = rtrim($request->website_url, '/');
+        $url = rtrim($request->website_url, '/');
         $projectName = $request->project_name ?? parse_url($url, PHP_URL_HOST) ?? 'Untitled Project';
 
         // ── Pillar 1: On-Page SEO ─────────────────────────────────────────────
@@ -33,7 +35,7 @@ class AnalysisController extends Controller
         $technical = $this->technicalSeo->check($url);
 
         // ── Pillar 3: Off-Page (placeholder — backlink APIs are paid) ─────────
-        $offPage = $this->buildOffPageData($url);
+        $offPage = $this->offPageSeo->check($url); 
 
         // ── AI Suggestions (based on on-page issues) ──────────────────────────
         $aiFixes = $this->aiFixGenerator->generate($onPage['issues'], $url);
@@ -45,18 +47,18 @@ class AnalysisController extends Controller
 
         // ── Persist ───────────────────────────────────────────────────────────
         $report = SeoReport::create([
-            'project_name'   => $projectName,
-            'website_url'    => $url,
-            'on_page_score'  => $onPage['on_page_score'],
-            'technical_score'=> $technical['technical_score'],
+            'project_name' => $projectName,
+            'website_url' => $url,
+            'on_page_score' => $onPage['on_page_score'],
+            'technical_score' => $technical['technical_score'],
             'off_page_score' => $offPage['off_page_score'],
-            'overall_score'  => $overallScore,
-            'raw_seo_data'   => array_merge($onPage['raw_seo_data'], [
-                'issues'       => $onPage['issues'],
-                'off_page'     => $offPage['details'],
+            'overall_score' => $overallScore,
+            'raw_seo_data' => array_merge($onPage['raw_seo_data'], [
+                'issues' => $onPage['issues'],
+                'off_page' => $offPage['details'],
             ]),
-            'page_speed_data'=> $technical['page_speed_data'],
-            'ai_fixes'       => $aiFixes,
+            'page_speed_data' => $technical['page_speed_data'],
+            'ai_fixes' => $aiFixes,
         ]);
 
         return redirect()->route('report.show', $report);
@@ -65,16 +67,16 @@ class AnalysisController extends Controller
     // ── Off-page: basic heuristic checks (no paid API needed) ─────────────────
     private function buildOffPageData(string $url): array
     {
-        $host   = parse_url($url, PHP_URL_HOST) ?? '';
-        $score  = 50; // neutral baseline — real off-page needs Ahrefs / Moz API
+        $host = parse_url($url, PHP_URL_HOST) ?? '';
+        $score = 50; // neutral baseline — real off-page needs Ahrefs / Moz API
         $details = [
-            'note'   => 'Full backlink data requires an Ahrefs/Moz API key.',
+            'note' => ' ',
             'domain' => $host,
             'checks' => [
-                'https'        => str_starts_with($url, 'https') ? 'pass' : 'fail',
-                'domain_age'   => 'unknown',
-                'backlinks'    => 'not checked',
-                'social_signals'=> 'not checked',
+                'https' => str_starts_with($url, 'https') ? 'pass' : 'fail',
+                'domain_age' => 'unknown',
+                'backlinks' => 'not checked',
+                'social_signals' => 'not checked',
             ],
         ];
 
@@ -85,7 +87,7 @@ class AnalysisController extends Controller
 
         return [
             'off_page_score' => $score,
-            'details'        => $details,
+            'details' => $details,
         ];
     }
 }
