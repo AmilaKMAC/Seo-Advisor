@@ -10,3 +10,4 @@ Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::post('/analyze', [AnalysisController::class, 'analyze'])->name('analyze');
 
 Route::get('/report/{report}', [ReportController::class, 'show'])->name('report.show');
+Route::post('/report/{report}/chat', [ReportController::class, 'chat'])->name('report.chat');

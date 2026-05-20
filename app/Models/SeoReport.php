@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class SeoReport extends Model
 {
@@ -19,23 +20,22 @@ class SeoReport extends Model
     ];
 
     protected $casts = [
-        'raw_seo_data' => 'array',
+        'raw_seo_data'    => 'array',
         'page_speed_data' => 'array',
-        'ai_fixes' => 'array',
+        'ai_fixes'        => 'array',
     ];
 
-    public function issues()
+    public function chatMessages(): HasMany
     {
-        return $this->hasMany(SeoIssue::class);
+        return $this->hasMany(ChatMessage::class);
     }
 
-    public function domains()
+    public function getScoreColorAttribute(): string
     {
-        return $this->hasMany(DomainRecommendation::class);
-    }
-
-    public function hosting()
-    {
-        return $this->hasMany(HostingRecommendation::class);
+        return match(true) {
+            $this->overall_score >= 80 => 'green',
+            $this->overall_score >= 50 => 'amber',
+            default                    => 'red',
+        };
     }
 }

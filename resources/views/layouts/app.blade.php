@@ -1,29 +1,32 @@
 <!DOCTYPE html>
 <html>
+
 <head>
     <title>SEO Advisor</title>
-    @vite(['resources/css/app.css'])
+
+    <script src="https://cdn.tailwindcss.com"></script>
 </head>
 
 <body class="bg-gray-100">
 
-<div class="flex min-h-screen">
+    <div class="flex min-h-screen">
 
-    <!-- Sidebar -->
-    @include('components.sidebar')
+        <!-- Sidebar -->
+        @include('components.sidebar')
 
-    <!-- Main -->
-    <div class="flex-1">
+        <!-- Main -->
+        <div class="flex-1">
 
-        @include('components.header')
+            @include('components.header')
 
-        <main class="p-6">
-            @yield('content')
-        </main>
+            <main class="p-6">
+                @yield('content')
+            </main>
+
+        </div>
 
     </div>
 
-</div>
-
 </body>
+
 </html>
